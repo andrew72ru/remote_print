@@ -10,19 +10,20 @@ Adafruit_Thermal printer(&printerSerial);
 
 
 // ------------- GPRS init variables ------------ //
-SoftwareSerial gsm(7, 8); // RX, TX
-String Arsp, Grsp, Helper;
+//SoftwareSerial gsm(7, 8); // RX, TX
+//String Arsp, Grsp, Helper;
 // ------------- GPRS init variables ------------ //
 
-void setup() {
-  Serial.begin(9600);
-  Serial.println("SETUP");
-  gsm.begin(9600);
-  gsm.println("AT+CMGF=1");
-  delay(1000);
-  gsm.println("AT+CNMI=1, 2, 0, 0, 0");
-}
+// void setup() {
+//  Serial.begin(9600);
+//  Serial.println("SETUP");
+//  gsm.begin(9600);
+//  gsm.println("AT+CMGF=1");
+//  delay(1000);
+//  gsm.println("AT+CNMI=1, 2, 0, 0, 0");
+// }
 
+  /*
 void loop() {
   if (gsm.available()) {
     Grsp = gsm.readString();
@@ -35,10 +36,10 @@ void loop() {
       Serial.println("Substring is");
       Serial.println(Grsp.substring(1,6));
     }
-
 //    PrintSms(Grsp);
   }
 }
+  */
 
 void PrintSms(String str) {
   printerSerial.begin(9600);
@@ -48,3 +49,4 @@ void PrintSms(String str) {
   printer.println(str);
   printer.feed(3);
 }
+
