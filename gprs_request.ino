@@ -1,16 +1,23 @@
-#include <gprs.h>
-#include <SoftwareSerial.h>
+#include        <gprs.h>
+#include        <SoftwareSerial.h>
+#include        <Adafruit_Thermal.h>
+#include        "russian_decode.h"
 
 #define HTTP_CMD "GET /api/summary/list HTTP/1.0\r\n\r\n"
 
 // api.dinner.zhdanovskih.name/api/summary/list?day=04.05.2018
 
-GPRS gprs;
-char buffer[512];
+GPRS              gprs;
+char              buffer[512];
+
+SoftwareSerial    printerSerial(5, 6);
+Adafruit_Thermal  printer(&printerSerial);
 
 void setup() {
   Serial.begin(9600);
-  while (!Serial);
+  printerSerial.begin(9600);
+  printer.begin();
+  printer.setCodePage(CODEPAGE_CP866);
 
   gprsJoin();
 
