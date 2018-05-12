@@ -3,7 +3,7 @@
 #include        <Adafruit_Thermal.h>
 #include        "russian_decode.h"
 
-#define HTTP_CMD "GET /api/summary/list HTTP/1.0\r\n\r\n"
+#define HTTP_CMD "GET /api/summary/list?day=11.05.2018 HTTP/1.0\r\n\r\n"
 
 // api.dinner.zhdanovskih.name/api/summary/list?day=04.05.2018
 
@@ -16,8 +16,6 @@ Adafruit_Thermal  printer(&printerSerial);
 void setup() {
   Serial.begin(9600);
   printerSerial.begin(9600);
-  printer.begin();
-  printer.setCodePage(CODEPAGE_CP866);
 
   gprsJoin();
 
@@ -32,10 +30,11 @@ void setup() {
     String checkHash;
     while (1) {
       String answer = gprs.serialSIM800.readStringUntil('\n');
-      if (answer.length() == 1 && i > 1) {
-        readAndPrint();
+      answer.trim();
+      if (answer.length() == 0 && i > 1) {
+        readAndPrint(answer);
+        break;
       } else {
-        answer.trim();
         if (answer.startsWith("Check-hash")) {
           checkHash = getStringFromHeader(answer);
           Serial.print("Check-hash is ");
@@ -61,18 +60,30 @@ void setup() {
 
 /**
  * HERE is the printer up, check and print
+ * Я понял, в чем дело. Принтер берет данные в собственный буфер, и делает ПАУЗЫ, пока не напечатает то, что в буфере
+ * А порт продолжает читаться в это время. Поэтому в принтере получается вот такое.
+ * Экспериментально можно подтвердить, установив delay в любом месте цикла этой функции и посмотрев в вывод дебага.
  */
-void readAndPrint() {
+void readAndPrint(String before) {
+  printer.begin();
+  printer.setDefault();
+  printer.setCodePage(CODEPAGE_CP866);
+  
+  char p[256];
+  String answer = before;
   while (1) {
-    int i = 0;
-    char r;
-    String check;
-    while (gprs.serialSIM800.available()) {
-      r = gprs.serialSIM800.read();
-      Serial.write(r);
-      if (r == '\n' || r == '\r') break;
+    answer.trim();
+    if(answer.length() > 0) {
+      if (answer.indexOf("CLOSED") != -1) break;
+      
+      answer.toCharArray(p, 256);
+      Serial.println(p);
+//      RUS(p);
+//      printer.println(p);
     }
-    if (r == '\n' || r == '\r') break;
+    answer = String(gprs.serialSIM800.readStringUntil('\n'));
+    answer = before + answer;
+    before = "";
   }
 }
 
@@ -107,6 +118,7 @@ int gprsConnectTCP() {
 }
 
 void gprsJoin() {
+  gprs.serialSIM800.listen();
   gprs.preInit();
   while (0 != gprs.init()) {
     Serial.println("init error");
