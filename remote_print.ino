@@ -3,7 +3,7 @@
 #include        <Adafruit_Thermal.h>
 #include        "russian_decode.h"
 
-#define HTTP_CMD "GET /api/summary/list?day=11.05.2018 HTTP/1.0\r\n\r\n"
+#define HTTP_CMD "GET /api/summary/list HTTP/1.0\r\n\r\n"
 
 // api.dinner.zhdanovskih.name/api/summary/list?day=04.05.2018
 
