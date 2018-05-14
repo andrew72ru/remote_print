@@ -11,7 +11,7 @@ GPRS              gprs;
 char              buffer[512];
 
 SoftwareSerial    printerSerial(5, 6);
-Adafruit_Thermal  printer(&printerSerial);
+Adafruit_Thermal  printer(&printerSerial, 4);
 
 void setup() {
   Serial.begin(9600);
@@ -32,7 +32,7 @@ void setup() {
       String answer = gprs.serialSIM800.readStringUntil('\n');
       answer.trim();
       if (answer.length() == 0 && i > 1) {
-        readAndPrint(answer);
+        readAndPrint();
         break;
       } else {
         if (answer.startsWith("Check-hash")) {
@@ -64,27 +64,24 @@ void setup() {
  * А порт продолжает читаться в это время. Поэтому в принтере получается вот такое.
  * Экспериментально можно подтвердить, установив delay в любом месте цикла этой функции и посмотрев в вывод дебага.
  */
-void readAndPrint(String before) {
+void readAndPrint() {
   printer.begin();
   printer.setDefault();
   printer.setCodePage(CODEPAGE_CP866);
-  
-  char p[256];
-  String answer = before;
+
+  String answer;
   while (1) {
-    answer.trim();
-    if(answer.length() > 0) {
-      if (answer.indexOf("CLOSED") != -1) break;
-      
-      answer.toCharArray(p, 256);
-      Serial.println(p);
-//      RUS(p);
-//      printer.println(p);
-    }
-    answer = String(gprs.serialSIM800.readStringUntil('\n'));
-    answer = before + answer;
-    before = "";
+    answer = gprs.serialSIM800.readStringUntil('\n');
+    if(answer.indexOf("CLOSED") != -1) break;
+    int l = answer.length() + 1;
+    char b[l];
+    answer.toCharArray(b, l);
+    RUS(b);
+    printer.println(b);
+    
+//    Serial.println(b);
   }
+  printer.feed(3);
 }
 
 void loop() {
