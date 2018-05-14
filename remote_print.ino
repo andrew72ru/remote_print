@@ -1,14 +1,18 @@
+#include        <EEPROM.h>
 #include        <gprs.h>
 #include        <SoftwareSerial.h>
 #include        <Adafruit_Thermal.h>
 #include        "russian_decode.h"
+#include        "http_header.h"
 
 #define HTTP_CMD "GET /api/summary/list HTTP/1.0\r\n\r\n"
+#define HTTP_SRV "pricestat.p72t.ru"
 
 // api.dinner.zhdanovskih.name/api/summary/list?day=04.05.2018
 
-GPRS              gprs;
-char              buffer[512];
+GPRS gprs;
+char buffer[512];
+char savedHash[32];
 
 SoftwareSerial    printerSerial(5, 6);
 Adafruit_Thermal  printer(&printerSerial, 4);
@@ -16,53 +20,10 @@ Adafruit_Thermal  printer(&printerSerial, 4);
 void setup() {
   Serial.begin(9600);
   printerSerial.begin(9600);
-
-  gprsJoin();
-
-//  char http_cmd[] = "GET /api/summary/list HTTP/1.0\r\n\r\n";
-
-  if (0 == gprsConnectTCP() && 0 == gprs.sendTCPData(HTTP_CMD)) {
-    Serial.println("Command sent");
-    while (!gprs.serialSIM800.available()); // wait for response
-
-    int i = 0;
-    long contentLength = 0;
-    String checkHash;
-    while (1) {
-      String answer = gprs.serialSIM800.readStringUntil('\n');
-      answer.trim();
-      if (answer.length() == 0 && i > 1) {
-        readAndPrint();
-        break;
-      } else {
-        if (answer.startsWith("Check-hash")) {
-          checkHash = getStringFromHeader(answer);
-          Serial.print("Check-hash is ");
-          Serial.println(checkHash);
-        }
-        if(answer.startsWith("Is-empty")) {
-          Serial.print("Is-empty is ");
-          Serial.println(getStringFromHeader(answer));
-        }
-      }
-
-      if (answer.indexOf("CLOSED") != -1) break;
-      i++;
-    }
-
-  } else {
-    Serial.println("sendTCPData fail");
-  }
-
-  Serial.println("");
-  Serial.println("Exit");
 }
 
 /**
  * HERE is the printer up, check and print
- * Я понял, в чем дело. Принтер берет данные в собственный буфер, и делает ПАУЗЫ, пока не напечатает то, что в буфере
- * А порт продолжает читаться в это время. Поэтому в принтере получается вот такое.
- * Экспериментально можно подтвердить, установив delay в любом месте цикла этой функции и посмотрев в вывод дебага.
  */
 void readAndPrint() {
   printer.begin();
@@ -76,35 +37,85 @@ void readAndPrint() {
     int l = answer.length() + 1;
     char b[l];
     answer.toCharArray(b, l);
-    RUS(b);
-    printer.println(b);
+//    RUS(b);
+//    printer.println(b);
     
-//    Serial.println(b);
+    Serial.println(b);
   }
-  printer.feed(3);
+//  printer.feed(3);
 }
 
 void loop() {
+  gprsJoin();
+
+  if (0 == gprsConnectTCP() && 0 == gprs.sendTCPData(HTTP_CMD)) {
+    while (!gprs.serialSIM800.available()); // wait for response
+
+    int     i = 0;
+    long    contentLength = 0;
+    String  checkHash;
+    String  prevHash;
+    while (1) {
+      String answer = gprs.serialSIM800.readStringUntil('\n');
+      answer.trim();
+      if (answer.length() == 0 && i > 1) {
+//        readAndPrint();
+        break;
+      } else {
+        if (answer.startsWith("Check-hash")) {
+          checkHash = getStringFromHeader(answer);
+          if(checkHash == "no-hash") break;
+          
+          prevHash = readEEPROM(0, 32);
+          Serial.println("checkHash is " + checkHash);
+          Serial.println("prevHash is  " + prevHash);
+          if(checkHash.compareTo(prevHash) == 0) {
+            Serial.println("Content already printed");
+            break;
+          } else {
+            writeEEPROM(checkHash, 0, 32);
+          }
+        }
+        if(answer.startsWith("Is-empty")) {
+          String isEmpty = getStringFromHeader(answer);
+          if(isEmpty == "empty") break;
+        }
+      }
+      if (answer.indexOf("CLOSED") != -1) break;
+      i++;
+    }
+  } else {
+    Serial.println("sendTCPData fail");
+  }
+
+  Serial.println("complete");
+//  delay(60000);
 }
 
-long getIntegerValueFromHeader(String header) {
-  String valuePart = getStringFromHeader(header);
-  long result = valuePart.toInt();
+String readEEPROM(int start, int end) {
+  String result;
+  for(int i = start; i <= end; i++) {
+    char c = EEPROM.read(i);
+    result.concat(c);
+  }
 
   return result;
 }
 
-String getStringFromHeader(String header) {
-  int colon = header.indexOf(':');
-  String valuePart = header.substring(colon + 2); // "+2" for ": "
-  valuePart.trim();
-
-  return valuePart;
+void writeEEPROM(String value, int start, int end) {
+  int length = end-start;
+  char val[length];
+  value.toCharArray(val, length);
+  int arIndex = 0;
+  for(int i = start; i <= end; i++) {
+    EEPROM.write(i, val[arIndex]);
+    arIndex++;
+  }
 }
 
 int gprsConnectTCP() {
   int reTries = 0;
-  while (0 != gprs.connectTCP("pricestat.p72t.ru", 8008)) {
+  while (0 != gprs.connectTCP(HTTP_SRV, 8008)) {
     Serial.println("TCP connect error");
     delay(2000);
     reTries ++;
