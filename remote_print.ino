@@ -8,8 +8,6 @@
 #define HTTP_CMD "GET /api/summary/list HTTP/1.0\r\n\r\n"
 #define HTTP_SRV "pricestat.p72t.ru"
 
-// api.dinner.zhdanovskih.name/api/summary/list?day=04.05.2018
-
 GPRS gprs;
 char buffer[512];
 char savedHash[32];
@@ -37,12 +35,12 @@ void readAndPrint() {
     int l = answer.length() + 1;
     char b[l];
     answer.toCharArray(b, l);
-//    RUS(b);
-//    printer.println(b);
+    RUS(b);
+    printer.println(b);
     
-    Serial.println(b);
+//    Serial.println(b);
   }
-//  printer.feed(3);
+  printer.feed(3);
 }
 
 void loop() {
@@ -83,7 +81,7 @@ void loop() {
         }
       }
       if (answer.indexOf("CLOSED") != -1) break;
-      i++;
+      if(answer.length() > 0) i++; // Iterate ONLY if string is not empty
     }
   } else {
     Serial.println("sendTCPData fail");
