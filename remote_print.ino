@@ -46,6 +46,7 @@ void readAndPrint() {
 }
 
 void loop() {
+  Serial.println("start");
   gprsJoin();
 
   if (0 == gprsConnectTCP() && 0 == gprs.sendTCPData(HTTP_CMD)) {
@@ -59,7 +60,7 @@ void loop() {
       String answer = gprs.serialSIM800.readStringUntil('\n');
       answer.trim();
       if (answer.length() == 0 && i > 1) {
-//        readAndPrint();
+        readAndPrint();
         break;
       } else {
         if (answer.startsWith("Check-hash")) {
@@ -103,7 +104,7 @@ String readEEPROM(int start, int end) {
 }
 
 void writeEEPROM(String value, int start, int end) {
-  int length = end-start;
+  int length = (end - start) + 1;
   char val[length];
   value.toCharArray(val, length);
   int arIndex = 0;
