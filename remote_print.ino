@@ -21,8 +21,8 @@ void setup() {
 }
 
 /**
- * HERE is the printer up, check and print
- */
+   HERE is the printer up, check and print
+*/
 void readAndPrint() {
   printer.begin();
   printer.setDefault();
@@ -31,14 +31,14 @@ void readAndPrint() {
   String answer;
   while (1) {
     answer = gprs.serialSIM800.readStringUntil('\n');
-    if(answer.indexOf("CLOSED") != -1) break;
+    if (answer.indexOf("CLOSED") != -1) break;
     int l = answer.length() + 1;
     char b[l];
     answer.toCharArray(b, l);
     RUS(b);
     printer.println(b);
-    
-//    Serial.println(b);
+
+    //    Serial.println(b);
   }
   printer.feed(3);
 }
@@ -63,37 +63,37 @@ void loop() {
       } else {
         if (answer.startsWith("Check-hash")) {
           checkHash = getStringFromHeader(answer);
-          if(checkHash == "no-hash") break;
-          
+          if (checkHash == "no-hash") break;
+
           prevHash = readEEPROM(0, 32);
           Serial.println("checkHash is " + checkHash);
           Serial.println("prevHash is  " + prevHash);
-          if(checkHash.compareTo(prevHash) == 0) {
+          if (checkHash.compareTo(prevHash) == 0) {
             Serial.println("Content already printed");
             break;
           } else {
             writeEEPROM(checkHash, 0, 32);
           }
         }
-        if(answer.startsWith("Is-empty")) {
+        if (answer.startsWith("Is-empty")) {
           String isEmpty = getStringFromHeader(answer);
-          if(isEmpty == "empty") break;
+          if (isEmpty == "empty") break;
         }
       }
       if (answer.indexOf("CLOSED") != -1) break;
-      if(answer.length() > 0) i++; // Iterate ONLY if string is not empty
+      if (answer.length() > 0) i++; // Iterate ONLY if string is not empty
     }
   } else {
     Serial.println("sendTCPData fail");
   }
 
   Serial.println("complete");
-//  delay(60000);
+  //  delay(60000);
 }
 
 String readEEPROM(int start, int end) {
   String result;
-  for(int i = start; i <= end; i++) {
+  for (int i = start; i <= end; i++) {
     char c = EEPROM.read(i);
     result.concat(c);
   }
@@ -106,7 +106,7 @@ void writeEEPROM(String value, int start, int end) {
   char val[length];
   value.toCharArray(val, length);
   int arIndex = 0;
-  for(int i = start; i <= end; i++) {
+  for (int i = start; i <= end; i++) {
     EEPROM.write(i, val[arIndex]);
     arIndex++;
   }
