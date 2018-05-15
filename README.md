@@ -12,3 +12,12 @@ Arguino print text answer from webserver.
 ## ATTENTION
 
 Change init baudrate in Seeeduino GPRS Library for **minimal** (e.g. 300) value!
+
+## TODO
+
+- [ ] Smart delay;
+- [ ] Functions to handle **fatal** error;
+- [ ] Power switch;
+- [ ] Error led;
+- [ ] Soldering;
+- [ ] Case;
