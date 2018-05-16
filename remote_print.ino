@@ -12,6 +12,7 @@ GPRS gprs;
 char buffer[512];
 char savedHash[32];
 long LOOP_DELAY = 37000;
+int  stringCount;
 
 SoftwareSerial    printerSerial(5, 6);
 Adafruit_Thermal  printer(&printerSerial, 4);
@@ -50,7 +51,6 @@ void loop() {
   unsigned long workTime;
   
   startTime = millis(); 
-  Serial.println();
   Serial.print("start at ");
   Serial.println(startTime);
 
@@ -96,6 +96,9 @@ void loop() {
           String isEmpty = getStringFromHeader(answer);
           if (isEmpty == "empty") break;
         }
+        if(answer.startsWith("String-count")) {
+          stringCount = getIntegerValueFromHeader(answer);
+        }
       }
       if (answer.indexOf("CLOSED") != -1) break;
       if (answer.length() > 0) i++; // Iterate ONLY if string is not empty
@@ -117,8 +120,11 @@ void loop() {
     Serial.print("Wait for ");
     Serial.print(waitTime);
     Serial.println(" ms.");
-    delay(waitTime);
+    if(waitTime > 0) {
+      delay(waitTime);
+    }
   }
+  Serial.println();
 }
 
 String readEEPROM(int start, int end) {
