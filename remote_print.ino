@@ -11,7 +11,7 @@
 GPRS gprs;
 char buffer[512];
 char savedHash[32];
-long LOOP_DELAY = 60000;
+long LOOP_DELAY = 37000;
 
 SoftwareSerial    printerSerial(5, 6);
 Adafruit_Thermal  printer(&printerSerial, 4);
@@ -103,6 +103,7 @@ void loop() {
   } else {
     Serial.println("sendTCPData fail");
   }
+  gprs.closeTCP();
 
   endTime = millis();
   workTime = (long) (endTime - startTime);
