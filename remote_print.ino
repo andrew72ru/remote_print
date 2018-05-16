@@ -11,6 +11,7 @@
 GPRS gprs;
 char buffer[512];
 char savedHash[32];
+long LOOP_DELAY = 60000;
 
 SoftwareSerial    printerSerial(5, 6);
 Adafruit_Thermal  printer(&printerSerial, 4);
@@ -44,8 +45,21 @@ void readAndPrint() {
 }
 
 void loop() {
-  Serial.println("start");
-  gprsJoin();
+  unsigned long startTime;
+  unsigned long endTime;
+  unsigned long workTime;
+  
+  startTime = millis(); 
+  Serial.println();
+  Serial.print("start at ");
+  Serial.println(startTime);
+
+  if(gprs.networkCheck() != 0) {
+    gprsJoin();
+  } else {
+    Serial.print("GPRS already on. IP is ");
+    Serial.println(gprs.getIPAddress());
+  }
 
   if (0 == gprsConnectTCP() && 0 == gprs.sendTCPData(HTTP_CMD)) {
     while (!gprs.serialSIM800.available()); // wait for response
@@ -63,7 +77,10 @@ void loop() {
       } else {
         if (answer.startsWith("Check-hash")) {
           checkHash = getStringFromHeader(answer);
-          if (checkHash == "no-hash") break;
+          if (checkHash == "no-hash") { 
+            Serial.println("Hash is empty, break");
+            break;
+          }
 
           prevHash = readEEPROM(0, 32);
           Serial.println("checkHash is " + checkHash);
@@ -87,8 +104,20 @@ void loop() {
     Serial.println("sendTCPData fail");
   }
 
-  Serial.println("complete");
-  //  delay(60000);
+  endTime = millis();
+  workTime = (long) (endTime - startTime);
+  Serial.print("Complete at ");
+  Serial.print(endTime);
+  Serial.print(", time of work is ");
+  Serial.println(workTime);
+
+  if(workTime < LOOP_DELAY) {
+    long waitTime = (long) (LOOP_DELAY - (long) workTime);
+    Serial.print("Wait for ");
+    Serial.print(waitTime);
+    Serial.println(" ms.");
+    delay(waitTime);
+  }
 }
 
 String readEEPROM(int start, int end) {
