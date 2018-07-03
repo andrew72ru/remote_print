@@ -5,7 +5,7 @@
 #include        "russian_decode.h"
 #include        "http_header.h"
 
-#define HTTP_CMD "GET /api/summary/list HTTP/1.0\r\n\r\n"
+#define HTTP_CMD "GET /api/summary/list?day=02.07.2018 HTTP/1.0\r\n\r\n"
 #define HTTP_SRV "proxy.dinner.zhdanovskih.name"
 
 GPRS gprs;
@@ -14,8 +14,8 @@ char savedHash[32];
 long LOOP_DELAY = 37000;
 int  stringCount;
 
-SoftwareSerial    printerSerial(5, 6);
-Adafruit_Thermal  printer(&printerSerial, 4);
+SoftwareSerial    printerSerial(7, 6); // RX, TX
+Adafruit_Thermal  printer(&printerSerial, 5);
 
 void setup() {
   Serial.begin(9600);
@@ -37,10 +37,9 @@ void readAndPrint() {
     int l = answer.length() + 1;
     char b[l];
     answer.toCharArray(b, l);
+    
     RUS(b);
     printer.println(b);
-
-    //    Serial.println(b);
   }
   printer.feed(3);
 }
@@ -62,7 +61,9 @@ void loop() {
   }
 
   if (0 == gprsConnectTCP() && 0 == gprs.sendTCPData(HTTP_CMD)) {
+    Serial.println("Data sent");
     while (!gprs.serialSIM800.available()); // wait for response
+    Serial.println("Response recieved");
 
     int     i = 0;
     long    contentLength = 0;
@@ -71,6 +72,7 @@ void loop() {
     while (1) {
       String answer = gprs.serialSIM800.readStringUntil('\n');
       answer.trim();
+
       if (answer.length() == 0 && i > 1) {
         readAndPrint();
         break;
@@ -85,12 +87,14 @@ void loop() {
           prevHash = readEEPROM(0, 32);
           Serial.println("checkHash is " + checkHash);
           Serial.println("prevHash is  " + prevHash);
+//          /*
           if (checkHash.compareTo(prevHash) == 0) {
             Serial.println("Content already printed");
             break;
           } else {
             writeEEPROM(checkHash, 0, 32);
           }
+//          */
         }
         if (answer.startsWith("Is-empty")) {
           String isEmpty = getStringFromHeader(answer);
@@ -100,6 +104,7 @@ void loop() {
           stringCount = getIntegerValueFromHeader(answer);
         }
       }
+
       if (answer.indexOf("CLOSED") != -1) break;
       if (answer.length() > 0) i++; // Iterate ONLY if string is not empty
     }
