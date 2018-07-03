@@ -13,15 +13,19 @@ Arguino print text answer from webserver.
 
 SIM800:
 
-- RX — 3
-- TX — 4
-- OT — 2
+```
+#define SIM800_TX_PIN           4
+#define SIM800_RX_PIN           3
+#define SIM800_POWER_PIN        9
+#define SIM800_POWER_STATUS     2
+```
 
 Printer:
 
-- RX — 7
-- TX — 6
-- DT — 5
+```
+SoftwareSerial    printerSerial(7, 6); // RX, TX
+Adafruit_Thermal  printer(&printerSerial, 5);
+```
 
 ## ATTENTION
 
@@ -34,4 +38,4 @@ Change init baudrate in Seeeduino GPRS Library for **minimal** (e.g. 300) value!
 - [x] Power switch;
 - [ ] Error led;
 - [x] Soldering;
-- [ ] Case;
+- [x] Case;
