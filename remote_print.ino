@@ -1,3 +1,8 @@
+/**
+ * ATTENTION! Sketch needs the change GPRS library!
+ * Set the SIM800 pins (libraries/Seeeduino_GPRS/sim800.h) to TX 4, RX 3, POWER 9, POWER_SATATUS 2
+ * Set the default baudRate in libraries/Seeeduino_GPRS/gprs.h to 300
+ */
 #include        <EEPROM.h>
 #include        <gprs.h>
 #include        <SoftwareSerial.h>
@@ -5,7 +10,7 @@
 #include        "russian_decode.h"
 #include        "http_header.h"
 
-#define HTTP_CMD "GET /api/summary/list?day=02.07.2018 HTTP/1.0\r\n\r\n"
+#define HTTP_CMD "GET /api/summary/list HTTP/1.0\r\n\r\n"
 #define HTTP_SRV "proxy.dinner.zhdanovskih.name"
 
 GPRS gprs;
