@@ -11,7 +11,7 @@
 #include        "http_header.h"
 
 #define HTTP_CMD "GET /api/summary/list HTTP/1.0\r\n\r\n"
-#define HTTP_SRV "proxy.dinner.zhdanovskih.name"
+#define HTTP_SRV ""
 
 GPRS gprs;
 char buffer[512];
